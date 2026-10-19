@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101115" />
+    <meta name="description" content="A polished air-drawing studio controlled by your hand and webcam." />
+    <title>Air Pen Studio</title>
+    <link rel="preconnect" href="https://storage.googleapis.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  </head>
+  <body>
+    <main id="studio" class="studio">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Air Pen Studio home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M5 18.5 14.9 4.6a2 2 0 0 1 3.2 2.4L8.2 20.8 4 21l1-2.5Z" />
+              <path d="m13.4 6.7 3.2 2.3M8.2 20.8l-1.7-1.2" />
+            </svg>
+          </span>
+          <span class="brand-name">air pen<span class="brand-dot">.</span></span>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <span class="brand-edition">STUDIO</span>
+        </a>
+
+        <div class="tracking-status" aria-live="polite">
+          <span id="tracking-dot" class="status-dot" aria-hidden="true"></span>
+          <span id="tracking-label">Camera off</span>
+          <span class="status-divider" aria-hidden="true"></span>
+          <span id="gesture-label">Ready when you are</span>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="camera-toggle" class="button button-primary" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm2.5 5 4-2.5v9l-4-2.5" /></svg>
+            <span>Start camera</span>
+          </button>
+          <button id="projector-toggle" class="icon-button top-icon" type="button" aria-label="Enter projector mode" title="Projector mode">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4zM9 20h6m-3-4v4M8 8h8m-8 4h5" /></svg>
+          </button>
+          <button id="fullscreen-toggle" class="icon-button top-icon" type="button" aria-label="Enter fullscreen" title="Fullscreen (F)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4" /></svg>
+          </button>
+          <button id="help-open" class="icon-button top-icon" type="button" aria-label="Show keyboard shortcuts" title="Keyboard shortcuts (?)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.7 9a2.4 2.4 0 1 1 4.2 1.6c-1.2 1.1-1.9 1.5-1.9 3m0 3h.01" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <section id="canvas-stage" class="canvas-stage" aria-label="Drawing canvas">
+        <canvas id="drawing-canvas" aria-label="Air Pen drawing canvas"></canvas>
+        <div id="camera-card" class="camera-card">
+          <div class="camera-card-head">
+            <div class="camera-title">
+              <span class="camera-live-dot" aria-hidden="true"></span>
+              <span>CAMERA</span>
+            </div>
+            <div class="camera-actions">
+              <button id="reset-tracking" class="camera-action" type="button" title="Reset hand tracking and projector alignment" aria-label="Reset hand tracking and projector alignment">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8m0-5v5h5" /></svg>
+              </button>
+              <button id="preview-toggle" class="camera-action" type="button" aria-label="Collapse camera preview" title="Collapse preview">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </div>
+          <div id="preview-wrap" class="preview-wrap">
+            <video id="camera-video" autoplay playsinline muted aria-label="Mirrored camera preview"></video>
+            <div id="camera-placeholder" class="camera-placeholder">
+              <span class="camera-placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M14 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm2.5 5 4-2.5v9l-4-2.5" /></svg>
+              </span>
+              <span>Camera preview</span>
+              <span class="camera-placeholder-note">Your video stays on this device</span>
+            </div>
+            <span id="preview-tracking" class="preview-badge">Waiting for camera</span>
+          </div>
+          <p id="camera-message" class="camera-message">Start the camera to begin air drawing.</p>
+        </div>
+
+        <div class="canvas-hint" aria-hidden="true">
+          <span class="hint-spark">✳</span>
+          Pinch thumb + index to draw
+          <span class="hint-separator">·</span>
+          thumb + middle to erase
+        </div>
+
+        <div id="immersive-exit-wrap" class="immersive-exit-wrap" hidden>
+          <button id="immersive-exit" class="button immersive-exit" type="button">Exit projection <kbd>Esc</kbd></button>
+        </div>
+      </section>
+
+      <nav class="toolbar" aria-label="Drawing tools">
+        <div class="tool-group" role="group" aria-label="Drawing tool">
+          <button id="pen-tool" class="tool-button active" type="button" aria-label="Select pen tool" aria-pressed="true" title="Pen (D)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" /><path d="m14.5 6.5 3 3" /></svg>
+            <span>Pen</span>
+          </button>
+          <button id="eraser-tool" class="tool-button" type="button" aria-label="Select eraser tool" aria-pressed="false" title="Eraser (E)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 19-3-3a2 2 0 0 1 0-2.8l8.2-8.3a2 2 0 0 1 2.9 0l5.1 5.2a2 2 0 0 1 0 2.8L13 20H8a1.5 1.5 0 0 1-1-.4Z" /><path d="m9 10 6 6" /></svg>
+            <span>Eraser</span>
+          </button>
+        </div>
+
+        <span class="toolbar-divider" aria-hidden="true"></span>
+
+        <div class="color-control" role="group" aria-label="Brush color">
+          <button class="color-swatch selected" type="button" data-color="#91e7f5" aria-label="Use ice blue" title="Ice blue" style="--swatch:#91e7f5"></button>
+          <button class="color-swatch" type="button" data-color="#c6a5ff" aria-label="Use violet" title="Violet" style="--swatch:#c6a5ff"></button>
+          <button class="color-swatch" type="button" data-color="#ff93b8" aria-label="Use pink" title="Pink" style="--swatch:#ff93b8"></button>
+          <button class="color-swatch" type="button" data-color="#f6d58b" aria-label="Use warm yellow" title="Warm yellow" style="--swatch:#f6d58b"></button>
+          <label class="custom-color" title="Choose a custom color">
+            <input id="color-picker" type="color" value="#91e7f5" aria-label="Choose custom brush color" />
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18m9-9H3m15.4-6.4L5.6 18.4m12.8 0L5.6 5.6" /></svg>
+          </label>
+        </div>
+
+        <span class="toolbar-divider" aria-hidden="true"></span>
+
+        <label class="range-control brush-control">
+          <span class="range-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" /></svg>
+          </span>
+          <span class="range-label">Size <output id="size-value">6</output></span>
+          <input id="brush-size" type="range" min="2" max="32" value="6" aria-label="Brush size" />
+        </label>
+
+        <label class="range-control opacity-control">
+          <span class="range-icon opacity-icon" aria-hidden="true">◐</span>
+          <span class="range-label">Opacity <output id="opacity-value">100%</output></span>
+          <input id="brush-opacity" type="range" min="10" max="100" value="100" aria-label="Stroke opacity" />
+        </label>
+
+        <span class="toolbar-divider wide-divider" aria-hidden="true"></span>
+
+        <button id="glow-toggle" class="tool-button mode-button" type="button" aria-label="Toggle neon glow mode" aria-pressed="false" title="Neon glow mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4" /><circle cx="12" cy="12" r="4" /></svg>
+          <span>Glow</span>
+        </button>
+
+        <span class="toolbar-divider" aria-hidden="true"></span>
+
+        <div class="history-controls" role="group" aria-label="History">
+          <button id="undo-button" class="icon-button" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h9a7 7 0 0 1 0 14h-2" /></svg>
+          </button>
+          <button id="redo-button" class="icon-button" type="button" aria-label="Redo" title="Redo (Ctrl+Y)" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9h-9a7 7 0 0 0 0 14h2" /></svg>
+          </button>
+        </div>
+
+        <button id="save-button" class="icon-button save-button" type="button" aria-label="Save drawing as PNG" title="Save PNG (Ctrl+S)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3" /></svg>
+        </button>
+        <button id="clear-button" class="icon-button danger-button" type="button" aria-label="Clear canvas" title="Clear canvas (Space)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16m-10 4v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+        </button>
+        <button id="settings-open" class="icon-button" type="button" aria-label="Open studio settings" title="Tracking and projection settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" /><path d="m19.4 15 .1.1 1.1.9-1.4 2.4-1.4-.5a7.7 7.7 0 0 1-1.4.8l-.3 1.5h-2.8l-.3-1.5a7.7 7.7 0 0 1-1.4-.8l-1.4.5-1.4-2.4 1.1-.9a6.7 6.7 0 0 1 0-1.6l-1.1-.9 1.4-2.4 1.4.5a7.7 7.7 0 0 1 1.4-.8l.3-1.5h2.8l.3 1.5a7.7 7.7 0 0 1 1.4.8l1.4-.5 1.4 2.4-1.1.9a6.7 6.7 0 0 1-.1 1.5Z" transform="translate(-1 -1)" /></svg>
+        </button>
+      </nav>
+    </main>
+
+    <dialog id="settings-dialog" class="dialog settings-dialog" aria-labelledby="settings-title">
+      <form method="dialog" class="dialog-content">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">STUDIO CONTROLS</p>
+            <h2 id="settings-title">Tracking &amp; projection</h2>
+          </div>
+          <button class="icon-button dialog-close" value="cancel" aria-label="Close settings" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <div class="settings-section">
+          <div class="setting-label">
+            <span>Gesture sensitivity</span>
+            <output id="sensitivity-value">55%</output>
+          </div>
+          <p>Higher sensitivity recognizes pinches with your fingers farther apart.</p>
+          <input id="gesture-sensitivity" type="range" min="0" max="100" value="55" aria-label="Gesture sensitivity" />
+          <div class="range-ends"><span>Precise</span><span>Responsive</span></div>
+        </div>
+        <div class="settings-section">
+          <div class="setting-label">
+            <span>Horizontal offset</span>
+            <output id="offset-x-value">0%</output>
+          </div>
+          <input id="offset-x" type="range" min="-20" max="20" value="0" aria-label="Projector horizontal offset" />
+        </div>
+        <div class="settings-section">
+          <div class="setting-label">
+            <span>Vertical offset</span>
+            <output id="offset-y-value">0%</output>
+          </div>
+          <input id="offset-y" type="range" min="-20" max="20" value="0" aria-label="Projector vertical offset" />
+        </div>
+        <div class="settings-section">
+          <div class="setting-label">
+            <span>Projection scale</span>
+            <output id="projection-scale-value">100%</output>
+          </div>
+          <input id="projection-scale" type="range" min="60" max="140" value="100" aria-label="Projector scale" />
+        </div>
+        <div class="settings-section settings-background">
+          <div>
+            <div class="setting-label"><span>Canvas background</span></div>
+            <p>Also used as the background when saving a PNG.</p>
+          </div>
+          <input id="background-picker" type="color" value="#101115" aria-label="Canvas background color" />
+        </div>
+        <p class="calibration-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5m0-8h.01" /></svg>
+          Physical projector and surface alignment may still need manual calibration.
+        </p>
+      </form>
+    </dialog>
+
+    <dialog id="shortcuts-dialog" class="dialog shortcuts-dialog" aria-labelledby="shortcuts-title">
+      <form method="dialog" class="dialog-content">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">QUICK REFERENCE</p>
+            <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+          </div>
+          <button class="icon-button dialog-close" value="cancel" aria-label="Close shortcuts" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <div class="shortcut-list">
+          <div><span>Select pen</span><kbd>D</kbd></div>
+          <div><span>Select eraser</span><kbd>E</kbd></div>
+          <div><span>Undo / redo</span><span class="key-combo"><kbd>Ctrl</kbd> <kbd>Z</kbd> <span>/</span> <kbd>Ctrl</kbd> <kbd>Y</kbd></span></div>
+          <div><span>Save drawing as PNG</span><span class="key-combo"><kbd>Ctrl</kbd> <kbd>S</kbd></span></div>
+          <div><span>Clear canvas</span><kbd>Space</kbd></div>
+          <div><span>Fullscreen</span><kbd>F</kbd></div>
+          <div><span>Show this guide</span><kbd>?</kbd></div>
+          <div><span>Draw with mouse</span><span class="shortcut-note">Click and drag</span></div>
+        </div>
+        <p class="shortcut-tip">In the air: pinch thumb + index to draw, or thumb + middle finger to erase.</p>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
